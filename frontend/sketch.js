@@ -45,16 +45,14 @@ function setup() {
 const evaluate = async () => {
     allFilledIn = []
     for (let i = 0; i < GRID_NUM; i++) {
-        let row = []
         for (let j = 0; j < GRID_NUM; j++) {
             if (grids[i][j].filledIn) {
-                row.push(1)
+                allFilledIn.push(1)
             }
             else {
-                row.push(0)
+                allFilledIn.push(0)
             }
         }
-        allFilledIn.push(row)
     }
     try {
         const config = {
