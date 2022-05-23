@@ -27,18 +27,19 @@ class NeuralNetwork {
 
   feedforward(inputsArr) {
     let inputs = Matrix.fromArray(inputsArr);
-    this.weights_ih;
+
+    //feedforward to get guesses
     let hiddenOutput = Matrix.multiply(this.weights_ih, inputs);
-    hiddenOutput = Matrix.add(hiddenOutput, this.bias_h);
-    hiddenOutput = Matrix.map(hiddenOutput, this.activationFunction);
+    hiddenOutput.add(this.bias_h)
+    hiddenOutput.map(this.activationFunction)
 
     let guesses = Matrix.multiply(this.weights_ho, hiddenOutput);
-    guesses = Matrix.add(guesses, this.bias_o);
-    guesses = Matrix.map(guesses, this.activationFunction);
+    guesses.add(this.bias_o)
+    guesses.map(this.activationFunction)
     // guesses = Matrix.map(guesses, (elt) => {
     //   return elt.toFixed(3);
     // });
-    return Matrix.toArray(guesses);
+    return guesses.toArray()
   }
 
   load(filename) {
@@ -74,12 +75,12 @@ class NeuralNetwork {
 
     //feedforward to get guesses
     let hiddenOutput = Matrix.multiply(this.weights_ih, inputs);
-    hiddenOutput = Matrix.add(hiddenOutput, this.bias_h);
-    hiddenOutput = Matrix.map(hiddenOutput, this.activationFunction);
+    hiddenOutput.add(this.bias_h)
+    hiddenOutput.map(this.activationFunction)
 
     let guesses = Matrix.multiply(this.weights_ho, hiddenOutput);
-    guesses = Matrix.add(guesses, this.bias_o);
-    guesses = Matrix.map(guesses, this.activationFunction);
+    guesses.add(this.bias_o)
+    guesses.map(this.activationFunction)
 
     // Find error vector for output layer
     let outputErrors = Matrix.subtract(targets, guesses);
@@ -88,16 +89,18 @@ class NeuralNetwork {
 
     //adjust the weights for this.weights_ho
     let gradient_ho = Matrix.map(guesses, this.fauxdSigmoig);
-    gradient_ho = Matrix.hadamardProduct(gradient_ho, outputErrors);
-    gradient_ho = Matrix.map(gradient_ho, (elt) => elt * this.learning_rate);
+    gradient_ho.multiply(outputErrors);
+    gradient_ho.map(elt => elt * this.learning_rate)
+
+
     let delta_weights_ho = Matrix.multiply(
       gradient_ho,
       Matrix.transpose(hiddenOutput)
     );
 
-    this.weights_ho = Matrix.add(this.weights_ho, delta_weights_ho);
+    this.weights_ho.add(delta_weights_ho);
     //adjust the bias for the output layer
-    this.bias_o = Matrix.add(this.bias_o, gradient_ho);
+    this.bias_o.add(gradient_ho);
 
     let hiddenErrors = Matrix.multiply(
       Matrix.transpose(this.weights_ho),
@@ -105,15 +108,16 @@ class NeuralNetwork {
     );
     //adjust the weights for this.weights_ih
     let gradient_ih = Matrix.map(hiddenOutput, this.fauxdSigmoig);
-    gradient_ih = Matrix.hadamardProduct(gradient_ih, hiddenErrors);
-    gradient_ih = Matrix.map(gradient_ih, (elt) => elt * this.learning_rate);
+    gradient_ih.multiply(hiddenErrors);
+    gradient_ih.map((elt) => elt * this.learning_rate);
+
     let delta_weights_ih = Matrix.multiply(
       gradient_ih,
       Matrix.transpose(inputs)
     );
 
-    this.weights_ih = Matrix.add(this.weights_ih, delta_weights_ih);
+    this.weights_ih.add(delta_weights_ih);
     //adjust the bias for the hidden layer
-    this.bias_h = Matrix.add(this.bias_h, gradient_ih);
+    this.bias_h.add(gradient_ih);
   }
 }

@@ -54,7 +54,6 @@ function draw() {
       select("#guess").elt.classList.remove("correct");
     }
     trainingIndex++;
-    trainingIndex = trainingIndex % 8000;
     total++;
     select("#percentage").html(`${100 * (correct / total)}%`);
   }
