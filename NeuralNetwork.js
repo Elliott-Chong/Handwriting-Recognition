@@ -1,120 +1,104 @@
 class NeuralNetwork {
-  constructor(inputNodes, hiddenNodes, outputNodes) {
-    this.inputNodes = inputNodes;
-    this.hiddenNodes = hiddenNodes;
-    this.outputNodes = outputNodes;
-
-    this.weights_ih = new Matrix(this.hiddenNodes, this.inputNodes);
-    this.weights_ho = new Matrix(this.outputNodes, this.hiddenNodes);
-    this.weights_ih.randomize();
-    this.weights_ho.randomize();
-
-    this.bias_h = new Matrix(this.hiddenNodes, 1);
-    this.bias_o = new Matrix(this.outputNodes, 1);
-    this.bias_h.randomize();
-    this.bias_o.randomize();
-
-    this.learning_rate = 0.1;
+  constructor() {
+    this.layers = [];
+    this.input_shape = null;
   }
 
-  activationFunction(input) {
-    return 1 / (1 + Math.exp(-input));
+  add(layer) {
+    this.layers.push(layer);
   }
 
-  fauxdSigmoig(y) {
-    return y * (1 - y);
+  input(shape) {
+    this.input_shape = shape;
   }
 
-  feedforward(inputsArr) {
-    let inputs = Matrix.fromArray(inputsArr);
-
-    //feedforward to get guesses
-    let hiddenOutput = Matrix.multiply(this.weights_ih, inputs);
-    hiddenOutput.add(this.bias_h);
-    hiddenOutput.map(this.activationFunction);
-
-    let guesses = Matrix.multiply(this.weights_ho, hiddenOutput);
-    guesses.add(this.bias_o);
-    guesses.map(this.activationFunction);
-    // guesses = Matrix.map(guesses, (elt) => {
-    //   return elt.toFixed(3);
-    // });
-    return guesses.toArray();
-  }
-
-  load(filename) {
-    var weights = JSON.parse(fs.readFileSync(filename, "utf8"));
-    this.weights_ih.data = weights.weights_ih;
-    this.weights_ho.data = weights.weights_ho;
-    this.bias_h.data = weights.bias_h;
-    this.bias_o.data = weights.bias_o;
-  }
-
-  save(filename) {
-    let weights = {
-      weights_ih: this.weights_ih.data,
-      weights_ho: this.weights_ho.data,
-      bias_h: this.bias_h.data,
-      bias_o: this.bias_o.data,
-    };
-
-    weights = JSON.stringify(weights);
-
-    fs.writeFile(filename, weights, "utf8", function (err) {
-      if (err) {
-        return console.log(err);
+  compile() {
+    for (let i = 0; i < this.layers.length; i++) {
+      let layer = this.layers[i];
+      let previous_layer = this.layers[i - 1];
+      if (i == 0) {
+        layer.weights = new Matrix(layer.nodes, this.input_shape);
+        layer.bias = new Matrix(layer.nodes, 1);
+      } else {
+        layer.weights = new Matrix(layer.nodes, previous_layer.nodes);
+        layer.bias = new Matrix(layer.nodes, 1);
       }
+    }
 
-      console.log("The file was saved!");
-    });
+    for (let i = 0; i < this.layers.length; i++) {
+      this.layers[i].weights.randomize();
+      this.layers[i].bias.randomize();
+    }
   }
 
-  train(inputsArr, targetsArr) {
-    let inputs = Matrix.fromArray(inputsArr);
-    let targets = Matrix.fromArray(targetsArr);
+  predict(input_array) {
+    if (input_array.length != this.input_shape) {
+      console.error("Input shape does not match!");
+      return;
+    }
 
-    //feedforward to get guesses
-    let hiddenOutput = Matrix.multiply(this.weights_ih, inputs);
-    hiddenOutput.add(this.bias_h);
-    hiddenOutput.map(this.activationFunction);
+    let inputs = Matrix.fromArray(input_array);
 
-    let guesses = Matrix.multiply(this.weights_ho, hiddenOutput);
-    guesses.add(this.bias_o);
-    guesses.map(this.activationFunction);
+    let prev_output = null;
+    for (let layer of this.layers) {
+      let output;
+      if (!prev_output) {
+        output = layer.feedforward(inputs);
+        prev_output = output;
+      } else {
+        output = layer.feedforward(prev_output);
+        prev_output = output;
+      }
+    }
 
-    // Find error vector for output layer
-    let outputErrors = Matrix.subtract(targets, guesses);
+    return prev_output.toArray();
+  }
 
-    //adjust the weights for this.weights_ho
-    let gradient_ho = Matrix.map(guesses, this.fauxdSigmoig);
-    gradient_ho.multiply(outputErrors);
-    gradient_ho.map((elt) => elt * this.learning_rate);
+  train(input_array, target_array) {
+    if (input_array.length != this.input_shape) {
+      console.error("Input shape does not match!");
+      return;
+    }
+    let inputs = Matrix.fromArray(input_array);
+    let targets = Matrix.fromArray(target_array);
 
-    let delta_weights_ho = Matrix.multiply(
-      gradient_ho,
-      Matrix.transpose(hiddenOutput)
-    );
+    // feedforward and store all the intermediate outputs in all_outputs
+    // all_outputs[i] is the output from layer [i]
+    let prev_output = null;
+    for (let layer of this.layers) {
+      let output;
+      if (!prev_output) {
+        output = layer.feedforward(inputs);
+        prev_output = output;
+      } else {
+        output = layer.feedforward(prev_output);
+        prev_output = output;
+      }
+      layer.output = output;
+    }
 
-    this.weights_ho.add(delta_weights_ho);
-    //adjust the bias for the output layer
-    this.bias_o.add(gradient_ho);
-
-    let hiddenErrors = Matrix.multiply(
-      Matrix.transpose(this.weights_ho),
-      outputErrors
-    );
-    //adjust the weights for this.weights_ih
-    let gradient_ih = Matrix.map(hiddenOutput, this.fauxdSigmoig);
-    gradient_ih.multiply(hiddenErrors);
-    gradient_ih.map((elt) => elt * this.learning_rate);
-
-    let delta_weights_ih = Matrix.multiply(
-      gradient_ih,
-      Matrix.transpose(inputs)
-    );
-
-    this.weights_ih.add(delta_weights_ih);
-    //adjust the bias for the hidden layer
-    this.bias_h.add(gradient_ih);
+    for (let i = this.layers.length - 1; i >= 0; i--) {
+      let layer = this.layers[i];
+      let errors;
+      if (i == this.layers.length - 1) {
+        errors = Matrix.subtract(targets, layer.output);
+      } else {
+        let forward_layer = this.layers[i + 1];
+        let forward_weights_transposed = Matrix.transpose(
+          forward_layer.weights
+        );
+        errors = Matrix.multiply(
+          forward_weights_transposed,
+          forward_layer.errors
+        );
+      }
+      layer.errors = errors;
+      if (i == 0) {
+        layer.backprop(inputs, errors);
+      } else {
+        let prev_layer = this.layers[i - 1];
+        layer.backprop(prev_layer.output, errors);
+      }
+    }
   }
 }

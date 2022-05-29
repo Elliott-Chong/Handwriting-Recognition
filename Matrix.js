@@ -3,6 +3,7 @@ class Matrix {
     this.rows = rows;
     this.cols = cols;
     this.data = [];
+
     for (let i = 0; i < this.rows; i++) {
       this.data[i] = [];
       for (let j = 0; j < this.cols; j++) {
@@ -11,129 +12,134 @@ class Matrix {
     }
   }
 
-  show() {
-    console.table(this.data);
+  static fromArray(arr) {
+    let m = new Matrix(arr.length, 1);
+    for (let i = 0; i < arr.length; i++) {
+      m.data[i][0] = arr[i];
+    }
+    return m;
+  }
+
+  static subtract(a, b) {
+    // Return a new Matrix a-b
+    let result = new Matrix(a.rows, a.cols);
+    for (let i = 0; i < result.rows; i++) {
+      for (let j = 0; j < result.cols; j++) {
+        result.data[i][j] = a.data[i][j] - b.data[i][j];
+      }
+    }
+    return result;
+  }
+
+  toArray() {
+    let arr = [];
+    for (let i = 0; i < this.rows; i++) {
+      for (let j = 0; j < this.cols; j++) {
+        arr.push(this.data[i][j]);
+      }
+    }
+    return arr;
   }
 
   randomize() {
     for (let i = 0; i < this.rows; i++) {
       for (let j = 0; j < this.cols; j++) {
-        this.data[i][j] = Math.floor(Math.random() * 2 - 1);
+        this.data[i][j] = Math.random() * 2 - 1;
       }
     }
   }
 
-  static fromArray(arr) {
-    let resultingMatrix = new Matrix(arr.length, 1);
-    for (let i = 0; i < resultingMatrix.rows; i++) {
-      resultingMatrix.data[i] = [];
-      for (let j = 0; j < resultingMatrix.cols; j++) {
-        resultingMatrix.data[i][j] = arr[i];
-      }
-    }
-    return resultingMatrix;
-  }
-
-  static toArray(m) {
-    let res = [];
-    Matrix.map(m, (elt) => res.push(elt));
-    return res;
-  }
-
-  static subtract(a, b) {
-    if (a.rows != b.rows || a.cols != b.cols) {
-      console.error("Error subtract operation");
-      return -1;
-    }
-    let resultingMatrix = new Matrix(a.rows, a.cols);
-    for (let i = 0; i < resultingMatrix.rows; i++) {
-      for (let j = 0; j < resultingMatrix.cols; j++) {
-        resultingMatrix.data[i][j] = a.data[i][j] - b.data[i][j];
-      }
-    }
-    return resultingMatrix;
-  }
-
-  static add(m, n) {
-    let resultingMatrix = new Matrix(m.rows, m.cols);
-    if (m instanceof Matrix && n instanceof Matrix) {
-      if (m.rows != n.rows || m.cols != n.cols) {
-        console.error(
-          "Invalid Add Operation, matrices do not have the same dimensions."
-        );
-        return -1;
-      }
-      for (let i = 0; i < n.rows; i++) {
-        for (let j = 0; j < n.cols; j++) {
-          resultingMatrix.data[i][j] += m.data[i][j] + n.data[i][j];
+  add(n) {
+    if (n instanceof Matrix) {
+      for (let i = 0; i < this.rows; i++) {
+        for (let j = 0; j < this.cols; j++) {
+          this.data[i][j] += n.data[i][j];
         }
       }
     } else {
-      for (let i = 0; i < m.rows; i++) {
-        for (let j = 0; j < m.cols; j++) {
-          resultingMatrix.data[i][j] += m.data[i][j] + n;
+      for (let i = 0; i < this.rows; i++) {
+        for (let j = 0; j < this.cols; j++) {
+          this.data[i][j] += n;
         }
       }
     }
-    return resultingMatrix;
   }
 
-  static map(m, cb) {
-    let resultingMatrix = new Matrix(m.rows, m.cols);
-    for (let i = 0; i < m.rows; i++) {
-      for (let j = 0; j < m.cols; j++) {
-        resultingMatrix.data[i][j] = cb(m.data[i][j]);
+  static transpose(matrix) {
+    let result = new Matrix(matrix.cols, matrix.rows);
+    for (let i = 0; i < matrix.rows; i++) {
+      for (let j = 0; j < matrix.cols; j++) {
+        result.data[j][i] = matrix.data[i][j];
       }
     }
-    return resultingMatrix;
+    return result;
   }
 
-  static transpose(m) {
-    let resultingMatrix = new Matrix(m.cols, m.rows);
-    for (let i = 0; i < m.rows; i++) {
-      for (let j = 0; j < m.cols; j++) {
-        resultingMatrix.data[j][i] = m.data[i][j];
+  static multiply(a, b) {
+    // Matrix product
+    if (a.cols !== b.rows) {
+      console.log("Columns of A must match rows of B.");
+      return undefined;
+    }
+    let result = new Matrix(a.rows, b.cols);
+    for (let i = 0; i < result.rows; i++) {
+      for (let j = 0; j < result.cols; j++) {
+        // Dot product of values in col
+        let sum = 0;
+        for (let k = 0; k < a.cols; k++) {
+          sum += a.data[i][k] * b.data[k][j];
+        }
+        result.data[i][j] = sum;
       }
     }
-    return resultingMatrix;
+    return result;
   }
 
-  static multiply(n, m) {
-    if (!n instanceof Matrix || !m instanceof Matrix) {
-      console.error("One or both of the inputs are not matrices");
-      return -1;
-    }
-
-    if (n.cols != m.rows) {
-      console.error(
-        "Invalid Multiplication Operation, matrices are not comformable."
-      );
-      return -1;
-    }
-
-    let resultingMatrix = new Matrix(n.rows, m.cols);
-
-    for (let i = 0; i < resultingMatrix.rows; i++) {
-      for (let j = 0; j < resultingMatrix.cols; j++) {
-        for (let k = 0; k < n.cols; k++) {
-          resultingMatrix.data[i][j] += n.data[i][k] * m.data[k][j];
+  multiply(n) {
+    if (n instanceof Matrix) {
+      // hadamard product
+      for (let i = 0; i < this.rows; i++) {
+        for (let j = 0; j < this.cols; j++) {
+          this.data[i][j] *= n.data[i][j];
+        }
+      }
+    } else {
+      // Scalar product
+      for (let i = 0; i < this.rows; i++) {
+        for (let j = 0; j < this.cols; j++) {
+          this.data[i][j] *= n;
         }
       }
     }
-
-    return resultingMatrix;
   }
 
-  static hadamardProduct(n, m) {
-    if (n.rows != m.rows || n.cols != m.cols) {
-      console.error("no");
-    }
-    let resultingMatrix = new Matrix(n.rows, n.cols);
-    for (let i = 0; i < n.rows; i++) {
-      for (let j = 0; j < n.cols; j++) {
-        resultingMatrix.data[i][j] = n.data[i][j] * m.data[i][j];
+  map(func) {
+    // Apply a function to every element of matrix
+    for (let i = 0; i < this.rows; i++) {
+      for (let j = 0; j < this.cols; j++) {
+        let val = this.data[i][j];
+        this.data[i][j] = func(val);
       }
     }
-    return resultingMatrix;
   }
+
+  static map(matrix, func) {
+    let result = new Matrix(matrix.rows, matrix.cols);
+    // Apply a function to every element of matrix
+    for (let i = 0; i < matrix.rows; i++) {
+      for (let j = 0; j < matrix.cols; j++) {
+        let val = matrix.data[i][j];
+        result.data[i][j] = func(val);
+      }
+    }
+    return result;
+  }
+
+  show() {
+    console.table(this.data);
+  }
+}
+
+if (typeof module !== "undefined") {
+  module.exports = Matrix;
 }

@@ -16,12 +16,16 @@ function setup() {
   // frameRate(10);
   trainingSet = set.training;
   trainingIndex = 0;
-  brain = new NeuralNetwork(784, 16, 10);
+  brain = new NeuralNetwork();
+  brain.input(784);
+  brain.add(new Dense(16));
+  brain.add(new Dense(10));
+  brain.compile();
 }
 
 function draw() {
   background(0);
-  for (let i = 0; i < 60; i++) {
+  for (let i = 0; i < 10; i++) {
     let index = Math.floor(Math.random() * 8000);
     var trainingDrawing = trainingSet[index];
     let inputs = convertInput(trainingDrawing.input);
@@ -34,7 +38,7 @@ function draw() {
       }
     }
 
-    let guess = convertOutput(brain.feedforward(inputs));
+    let guess = convertOutput(brain.predict(inputs));
     let actual = convertOutput(trainingDrawing.output);
 
     select("#label").html(actual);
