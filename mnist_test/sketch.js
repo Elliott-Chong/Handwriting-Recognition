@@ -4,11 +4,12 @@ let brain;
 let trainingIndex = 0;
 
 let correct;
+var set;
 let total;
 
 function setup() {
   let cnv = createCanvas(600, 600);
-  var set = mnist.set(8000, 2000);
+  set = mnist.set(8000, 2000);
   cnv.parent("#canvas");
   RESO = width / 28;
   correct = 0;
@@ -18,9 +19,24 @@ function setup() {
   trainingIndex = 0;
   brain = new NeuralNetwork();
   brain.input(784);
-  brain.add(new Dense(16));
+  brain.add(new Dense(100));
   brain.add(new Dense(10));
   brain.compile();
+}
+
+function test() {
+  let correct = 0;
+  let total = set.test.length;
+  for (let i = 0; i < set.test.length; i++) {
+    let inputs = set.test[i].input;
+    let output = set.test[i].output;
+    let guess = convertOutput(brain.predict(inputs));
+    let actual = convertOutput(output);
+    if (guess == actual) {
+      correct++;
+    }
+  }
+  console.log((correct / total) * 100 + "%");
 }
 
 function draw() {

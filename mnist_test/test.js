@@ -14,25 +14,30 @@ function setup() {
     { input: [1, 1], output: [0] },
     { input: [0, 0], output: [0] },
   ];
-  brain = new NeuralNetwork(2, 3, 1);
+  brain = new NeuralNetwork();
+  brain.input(2);
+  brain.add(new Dense(10));
+  brain.add(new Dense(10));
+  brain.add(new Dense(10));
+  brain.add(new Dense(1));
+  brain.compile();
   train = (n) => {
     for (let i = 0; i < n; i++) {
-
       let yes = random(dataSet);
       brain.train(yes.input, yes.output);
     }
-
-  }
+  };
 }
 
 function draw() {
-  // noStroke();
-  // for (let i = 0; i < height / RESO; i++) {
-  //   for (let j = 0; j < width / RESO; j++) {
-  //     let input = [i / (height / RESO), j / (width / RESO)];
-  //     let output = brain.feedforward(input);
-  //     fill(output * 255);
-  //     rect(i * RESO, j * RESO, RESO, RESO);
-  //   }
-  // }
+  noStroke();
+  train(100);
+  for (let i = 0; i < height / RESO; i++) {
+    for (let j = 0; j < width / RESO; j++) {
+      let input = [i / (height / RESO), j / (width / RESO)];
+      let output = brain.predict(input);
+      fill(output * 255);
+      rect(i * RESO, j * RESO, RESO, RESO);
+    }
+  }
 }
