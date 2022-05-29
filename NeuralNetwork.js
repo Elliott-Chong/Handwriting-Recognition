@@ -30,16 +30,16 @@ class NeuralNetwork {
 
     //feedforward to get guesses
     let hiddenOutput = Matrix.multiply(this.weights_ih, inputs);
-    hiddenOutput.add(this.bias_h)
-    hiddenOutput.map(this.activationFunction)
+    hiddenOutput.add(this.bias_h);
+    hiddenOutput.map(this.activationFunction);
 
     let guesses = Matrix.multiply(this.weights_ho, hiddenOutput);
-    guesses.add(this.bias_o)
-    guesses.map(this.activationFunction)
+    guesses.add(this.bias_o);
+    guesses.map(this.activationFunction);
     // guesses = Matrix.map(guesses, (elt) => {
     //   return elt.toFixed(3);
     // });
-    return guesses.toArray()
+    return guesses.toArray();
   }
 
   load(filename) {
@@ -75,23 +75,20 @@ class NeuralNetwork {
 
     //feedforward to get guesses
     let hiddenOutput = Matrix.multiply(this.weights_ih, inputs);
-    hiddenOutput.add(this.bias_h)
-    hiddenOutput.map(this.activationFunction)
+    hiddenOutput.add(this.bias_h);
+    hiddenOutput.map(this.activationFunction);
 
     let guesses = Matrix.multiply(this.weights_ho, hiddenOutput);
-    guesses.add(this.bias_o)
-    guesses.map(this.activationFunction)
+    guesses.add(this.bias_o);
+    guesses.map(this.activationFunction);
 
     // Find error vector for output layer
     let outputErrors = Matrix.subtract(targets, guesses);
 
-    //find error vector for hidden layer
-
     //adjust the weights for this.weights_ho
     let gradient_ho = Matrix.map(guesses, this.fauxdSigmoig);
     gradient_ho.multiply(outputErrors);
-    gradient_ho.map(elt => elt * this.learning_rate)
-
+    gradient_ho.map((elt) => elt * this.learning_rate);
 
     let delta_weights_ho = Matrix.multiply(
       gradient_ho,

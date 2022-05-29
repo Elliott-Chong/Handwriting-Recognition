@@ -21,7 +21,7 @@ function setup() {
 
 function draw() {
   background(0);
-  for (let i = 0; i < 20; i++) {
+  for (let i = 0; i < 60; i++) {
     let index = Math.floor(Math.random() * 8000);
     var trainingDrawing = trainingSet[index];
     let inputs = convertInput(trainingDrawing.input);
